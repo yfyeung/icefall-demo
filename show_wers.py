@@ -21,7 +21,8 @@ python ./show_wers.py \
     --start-epoch 21 \
     --end-epoch 40 \
     --decoding-method greedy_search \
-    --exp-names exp_960
+    --exp-names exp_960 \
+    --dataset "test-clean test-other"
 """
 import os
 import argparse
@@ -98,6 +99,16 @@ def get_parser():
         """
     )
 
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="test-clean test-other",
+        help="""If there are more than one,
+        please separate them with spaces,
+        e.g 'dev test'
+        """
+    )
+
     return parser
 
 
@@ -105,7 +116,6 @@ def get_params():
     params = AttributeDict()
 
     return params
-
 
 def main():
     parser = get_parser()
@@ -115,15 +125,16 @@ def main():
     params.update(vars(args))
 
     assert params.start_epoch > 1, params.start_epoch
+    datasets = params.dataset.split()
 
     os.system("rm missed.txt")
     for exp_dir_path in params.exp_names.split(" ", -1):
         os.system(f"rm wers_{exp_dir_path}.txt")
         dir_path = os.path.join(exp_dir_path, params.decoding_method)
-        for dataset in ["test-clean", "test-other"]:
+        for dataset in datasets:
             for epoch in range(params.start_epoch, params.end_epoch + 1):
-                for avg in range(1, epoch - 19):
-                    if os.system(f'cat {dir_path}/wer-summary-{dataset}-{params.decoding_method}-epoch-{epoch}-avg-{avg}-context-2-max-sym-per-frame-1-use-averaged-model.txt | grep "{params.decoding_method}" >> wers_{exp_dir_path}.txt'):
+                for avg in range(1, 21):
+                    if os.system(f"cat {dir_path}/wer-summary-{dataset}-epoch-{epoch}-avg-{avg}-beam-10.0-max-contexts-8-max-states-64-use-averaged-model.txt | grep beam_10.0_max_contexts_8_max_states_64 | sed 's/beam_10.0_max_contexts_8_max_states_64/{params.decoding_method}/g' >> wers_{exp_dir_path}.txt"):
                         with open("missed.txt", "a") as f:
                             f.write(f"{exp_dir_path} {epoch} {avg}\n")
                     else:
@@ -135,7 +146,7 @@ def main():
             l = f.readlines()
         for i in l:
             i = i.rstrip()
-            if "test-clean" in i or "test-other" in i:
+            if datasets[0] in i or datasets[1] in i:
                 i = i.split(" ", -1)
                 d, e, a = i[0], i[1], i[2]
                 data[f"{e}-{a}-{d}"] = float(res)
@@ -145,12 +156,12 @@ def main():
 
         sorted_data = {}
         print("###", exp_dir_path)
-        print("| test-clean & test-other | sum | config |")
+        print(f"| {datasets[0]} & {datasets[1]} | sum | config |")
         print("| --- | --- | --- | ")
         for i in range(params.start_epoch, params.end_epoch + 1):
-            for j in range(1, i - 19):
-                c = data[f"{i}-{j}-test-clean"]
-                o = data[f"{i}-{j}-test-other"]
+            for j in range(1, 21):
+                c = data[f"{i}-{j}-{datasets[0]}"]
+                o = data[f"{i}-{j}-{datasets[1]}"]
                 s = c + o
                 res = str(c) + " & " + str(o)
                 ll = "| " + res + " | " + f"{s:.2f}" + " | " + f"epoch {i} avg {j} |"
