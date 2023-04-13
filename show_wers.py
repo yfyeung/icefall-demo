@@ -90,6 +90,16 @@ def get_parser():
     )
 
     parser.add_argument(
+        "--metrics",
+        type=str,
+        default="WER",
+        help="""Possible values are:
+          - WER
+          - PER
+        """,
+    )
+
+    parser.add_argument(
         "--exp-names",
         type=str,
         default="exp",
@@ -126,6 +136,7 @@ def main():
 
     assert params.start_epoch > 1, params.start_epoch
     datasets = params.dataset.split()
+    metrics = params.metrics
 
     os.system("rm missed.txt")
     for exp_dir_path in params.exp_names.split(" ", -1):
@@ -134,7 +145,7 @@ def main():
         for dataset in datasets:
             for epoch in range(params.start_epoch, params.end_epoch + 1):
                 for avg in range(1, 21):
-                    if os.system(f"cat {dir_path}/wer-summary-{dataset}-epoch-{epoch}-avg-{avg}-beam-10.0-max-contexts-8-max-states-64-use-averaged-model.txt | grep beam_10.0_max_contexts_8_max_states_64 | sed 's/beam_10.0_max_contexts_8_max_states_64/{params.decoding_method}/g' >> wers_{exp_dir_path}.txt"):
+                    if os.system(f"cat {dir_path}/{metrics.lower()}-summary-{dataset}-epoch-{epoch}-avg-{avg}-beam-10.0-max-contexts-8-max-states-64-use-averaged-model.txt | grep beam_10.0_max_contexts_8_max_states_64 | sed 's/beam_10.0_max_contexts_8_max_states_64/{params.decoding_method}/g' >> wers_{exp_dir_path}.txt"):
                         with open("missed.txt", "a") as f:
                             f.write(f"{exp_dir_path} {epoch} {avg}\n")
                     else:
