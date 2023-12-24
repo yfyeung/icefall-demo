@@ -1,5 +1,6 @@
 Some demos for icefall
 
+```shell
 .
 ├── README.md
 ├── examples
@@ -8,3 +9,4 @@ Some demos for icefall
     ├── decode.sh
     ├── print_diagnostics.sh
     └── sort_results.sh
+```
