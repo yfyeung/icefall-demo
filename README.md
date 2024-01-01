@@ -4,7 +4,8 @@ Some demos for icefall
 .
 ├── README.md
 ├── examples
-│   └── librilight_ssl
+│   ├── librilight_ssl
+│   └── librispeech_ssl
 └── tools
     ├── decode.sh
     ├── print_diagnostics.sh
